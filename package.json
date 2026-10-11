@@ -1,0 +1,12 @@
+{
+  "name": "read-aloud",
+  "version": "2.0.0",
+  "description": "Text-to-speech content reader with Sarvam, OpenAI, ElevenLabs, Deepgram and browser voices",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

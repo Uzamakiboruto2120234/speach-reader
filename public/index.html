@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Read Aloud</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="titles">
+      <h1>Read Aloud</h1>
+      <span class="sub">Paste text, open a file or load a web page. Click any sentence to start from there.</span>
+    </div>
+    <button class="btn" id="theme" type="button" aria-label="Switch theme">Theme: system</button>
+  </header>
+
+  <div class="desk">
+    <div class="left">
+      <section class="panel" aria-labelledby="in-label">
+        <div class="panel-head">
+          <span class="label" id="in-label">Your text</span>
+          <div class="tools">
+            <button class="btn" id="open-file" type="button">Open file</button>
+            <button class="btn" id="open-url" type="button" aria-expanded="false" aria-controls="url-row">From web page</button>
+            <button class="btn" id="sample" type="button">Sample</button>
+            <button class="btn" id="clear" type="button">Clear</button>
+          </div>
+        </div>
+        <form class="url-row" id="url-row" hidden>
+          <input type="text" id="url" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://example.com/article" aria-label="Web page address">
+          <button class="btn primary" id="url-go" type="submit">Load</button>
+        </form>
+        <textarea id="text" spellcheck="false" aria-label="Text to read aloud" placeholder="Paste or type text here."></textarea>
+        <div class="meta">
+          <span id="count">0 words</span>
+          <label class="check"><input type="checkbox" id="clean" checked> Skip markdown symbols and links</label>
+        </div>
+        <input type="file" id="file" accept=".txt,.md,.markdown,.text,.csv,text/plain" hidden>
+      </section>
+
+      <section class="panel" aria-labelledby="voice-label">
+        <div class="panel-head">
+          <span class="label" id="voice-label">Voice</span>
+          <button class="btn" id="preview" type="button">Preview</button>
+        </div>
+        <div class="voice-body">
+          <div class="seg" id="providers" role="radiogroup" aria-label="Speech provider"></div>
+          <p class="note" id="prov-note" hidden></p>
+
+          <div class="grid">
+            <div class="field" id="f-model">
+              <label for="model">Model</label>
+              <select id="model"></select>
+            </div>
+            <div class="field" id="f-lang" hidden>
+              <label for="lang">Language</label>
+              <select id="lang"></select>
+            </div>
+            <div class="field wide" id="f-voice">
+              <label for="voice">Voice</label>
+              <select id="voice"></select>
+            </div>
+            <div class="field wide" id="f-custom" hidden>
+              <label for="custom">Or a voice ID</label>
+              <input type="text" id="custom" autocomplete="off" spellcheck="false" placeholder="Overrides the voice above">
+            </div>
+            <div class="field" id="f-var" hidden>
+              <label for="variation">Variation <output id="variation-o">0.6</output></label>
+              <input id="variation" type="range" min="0.01" max="1" step="0.01" value="0.6">
+            </div>
+            <div class="field" id="f-stab" hidden>
+              <label for="stability">Stability <output id="stability-o">0.5</output></label>
+              <input id="stability" type="range" min="0" max="1" step="0.05" value="0.5">
+            </div>
+            <div class="field wide" id="f-instr" hidden>
+              <label for="instr">Instructions</label>
+              <input type="text" id="instr" autocomplete="off" placeholder="e.g. Calm, warm, unhurried">
+            </div>
+          </div>
+          <div class="save-row">
+            <button class="btn" id="save" type="button">Save as MP3</button>
+            <span class="hint" id="save-hint">Generates every passage, then downloads one file.</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel reader-panel" aria-labelledby="out-label">
+      <div class="panel-head">
+        <span class="label" id="out-label">Reader</span>
+        <span class="label keys">Space play/pause · ← → skip · [ ] speed</span>
+      </div>
+      <div class="reader" id="reader"></div>
+    </section>
+  </div>
+</div>
+
+<div class="bar">
+  <div class="bar-inner">
+    <div class="progress" aria-hidden="true"><i id="prog"></i></div>
+    <div class="row">
+      <div class="transport">
+        <button class="icon-btn" id="prev" type="button" aria-label="Previous passage"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9.5 12z"/></svg></button>
+        <button class="icon-btn play" id="play" type="button" aria-label="Play"><svg id="play-ico" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+        <button class="icon-btn" id="stop" type="button" aria-label="Stop"><svg viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg></button>
+        <button class="icon-btn" id="next" type="button" aria-label="Next passage"><svg viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5l10.5 7L4 19z"/></svg></button>
+      </div>
+      <div class="status" id="status" role="status" aria-live="polite">Ready</div>
+      <div class="field speed">
+        <label for="speed">Speed <output id="speed-o">1.0×</output></label>
+        <input id="speed" type="range" min="0.5" max="2.5" step="0.05" value="1">
+      </div>
+      <div class="field sleep">
+        <label for="sleep">Sleep timer <output id="sleep-o"></output></label>
+        <select id="sleep">
+          <option value="0">Off</option>
+          <option value="15">15 minutes</option>
+          <option value="30">30 minutes</option>
+          <option value="45">45 minutes</option>
+          <option value="60">1 hour</option>
+          <option value="para">End of paragraph</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>
